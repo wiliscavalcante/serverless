@@ -1,0 +1,33 @@
+service: iam-key-rotation
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: us-east-1
+  profile: default
+  stage: prod
+  iam:
+    role:
+      statements:
+        - Sid: ListUsersAndTags
+          Effect: Allow
+          Action:
+            - iam:ListUsers
+            - iam:ListUserTags
+          Resource: "*"
+        - Sid: ListCreateDeleteKeys
+          Effect: Allow
+          Action:
+            - iam:ListAccessKeys
+            - iam:CreateAccessKey
+            - iam:DeleteAccessKey
+          Resource: "arn:aws:iam::*:user/*"
+
+functions:
+  rotateKeys:
+    handler: handler.rotate_keys # O seu manipulador vai aqui
+    events:
+      - schedule:
+          name: RotateIAMKeysEvery90Days
+          description: 'Esta regra dispara a cada 90 dias para rotacionar as chaves IAM.'
+          rate: cron(0 12 1 */3 ? *)
